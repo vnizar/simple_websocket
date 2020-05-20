@@ -1,0 +1,70 @@
+<html>
+
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/web-socket-js/1.0.0/web_socket.js"></script>
+</head>
+
+<body>
+  <div>
+    <div style="float: left;width: 50%;">
+      Users :
+      <ul id="users"></ul>
+    </div>
+    <div style="float: right;width: 50%;">
+      <p id="log">Log : </p>
+      <input type="text" id="message" />
+      <button id="send" type="button">Send</button>
+    </div>
+  </div>
+  <script>
+    (function () {
+      let ws = new WebSocket('wss://lit-refuge-24811.herokuapp.com');
+      var el = document.getElementById("log");
+      var bt = document.getElementById("send");
+      var users = document.getElementById("users");
+      var userId;
+      el.setAttribute('style', 'white-space: pre;');
+
+      ws.onopen = function () {
+        el.textContent += "Connected \r\n";
+      };
+      ws.onmessage = function (message) {
+        console.debug("WebSocket message received:", message);
+        let msg = JSON.parse(message.data);
+
+        if (msg.type == "user_id") {
+          userId = msg.message;
+          return;
+        }
+
+        if (msg.type == "user_list") {
+          users.innerHTML = '';
+          msg.message.forEach((item) => {
+            var itemText = item;
+            if (itemText == userId) {
+              itemText += " (you)";
+            }
+            var node = document.createElement("LI");
+            var text = document.createTextNode(itemText);
+            node.appendChild(text);
+            users.appendChild(node);
+          });
+          return;
+        }
+
+        if (msg.type == "chat") {
+          el.textContent += msg.message + "\r\n";
+          return;
+        }
+      };
+
+      bt.onclick = function () {
+        msg = document.getElementById("message");
+        ws.send(msg.value);
+        msg.value = "";
+      };
+    })();
+  </script>
+</body>
+
+</html>
